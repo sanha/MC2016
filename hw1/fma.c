@@ -18,15 +18,15 @@ int main(void) {
   int i, j;
   int outer_itr = 20;
   int iterate = 1e8;
-  for(i = 0; i < outer_itr; i++) {
+  for (i = 0; i < outer_itr; i++) {
     gettimeofday(&time1, NULL);
-    for(j = 0; j < iterate; j++) {
+    for (j = 0; j < iterate; j++) {
       result1 = fma(x, (float)j, y);
       result1 = fma(result1, x, y);
       result1 = fma(result1, y, x);
     }
     gettimeofday(&time2, NULL);
-    for(j = 0; j < iterate; j++) {
+    for (j = 0; j < iterate; j++) {
       result2 = x * (float)j + y;
       result2 = result2 * x + y;
       result2 = result2 * y + x;
