@@ -1,1 +1,1 @@
-# 2016 fall semester Multicore course
+# 2016 fall semester Multicore Computing course
