@@ -6,7 +6,7 @@
 #include "timers.h"
 
 #define NDIM    2048
-#define NUM_THREADS 16
+#define NUM_THREADS 16 
 
 float a[NDIM][NDIM];
 float b[NDIM][NDIM];

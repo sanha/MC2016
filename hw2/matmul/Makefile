@@ -11,7 +11,7 @@ $(TARGET):$(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 clean:
-	rm -rf $(TARGET) $(OBJS)
+	rm -rf $(TARGET) $(OBJS) task*
 
 clog:
 	rm -rf task*
