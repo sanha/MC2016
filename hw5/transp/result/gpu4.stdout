@@ -1,0 +1,5 @@
+8192 x 8192 x 8192
+GPU 4, CPU 0
+Time elapsed : 8.207686 sec
+Validating the result..
+Validation : SUCCESSFUL.
