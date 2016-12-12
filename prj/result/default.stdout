@@ -1,0 +1,22 @@
+images/bin/0/0.bin : kit fox, Vulpes macrotis : 0.733
+images/bin/0/1.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.551
+images/bin/0/2.bin : fox squirrel, eastern fox squirrel, Sciurus niger : 0.476
+images/bin/0/3.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.634
+images/bin/0/4.bin : red wolf, maned wolf, Canis rufus, Canis niger : 0.412
+images/bin/0/5.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.199
+images/bin/0/6.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.478
+images/bin/0/7.bin : kit fox, Vulpes macrotis : 0.217
+images/bin/0/8.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.808
+images/bin/0/9.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.680
+images/bin/300/0.bin : china cabinet, china closet : 0.790
+images/bin/300/1.bin : china cabinet, china closet : 0.998
+images/bin/300/2.bin : china cabinet, china closet : 0.450
+images/bin/300/3.bin : china cabinet, china closet : 0.898
+images/bin/300/4.bin : china cabinet, china closet : 0.988
+images/bin/300/5.bin : entertainment center : 0.259
+images/bin/300/6.bin : china cabinet, china closet : 0.997
+images/bin/300/7.bin : china cabinet, china closet : 0.919
+images/bin/300/8.bin : china cabinet, china closet : 0.445
+images/bin/300/9.bin : china cabinet, china closet : 0.997
+images/bin/700/1.bin : castle : 0.996
+Elapsed time: 319.311 sec
