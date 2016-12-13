@@ -1,4 +1,3 @@
-cpu device num: 1
 images/bin/0/0.bin : kit fox, Vulpes macrotis : 0.733
 images/bin/0/1.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.551
 images/bin/0/2.bin : fox squirrel, eastern fox squirrel, Sciurus niger : 0.476
@@ -20,4 +19,4 @@ images/bin/300/7.bin : china cabinet, china closet : 0.919
 images/bin/300/8.bin : china cabinet, china closet : 0.445
 images/bin/300/9.bin : china cabinet, china closet : 0.997
 images/bin/700/1.bin : castle : 0.996
-Elapsed time: 342.062 sec
+Elapsed time: 44.216 sec
