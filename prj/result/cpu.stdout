@@ -14,20 +14,4 @@ images/bin/300/2.bin : china cabinet, china closet : 0.450
 images/bin/300/3.bin : china cabinet, china closet : 0.898
 images/bin/300/4.bin : china cabinet, china closet : 0.988
 images/bin/300/5.bin : entertainment center : 0.259
-images/bin/300/6.bin : china cabinet, china closet : 0.997
-images/bin/300/7.bin : china cabinet, china closet : 0.919
-images/bin/300/8.bin : china cabinet, china closet : 0.445
-images/bin/300/9.bin : china cabinet, china closet : 0.997
-images/bin/700/0.bin : church, church building : 0.611
-images/bin/700/1.bin : castle : 0.996
-images/bin/700/2.bin : castle : 0.295
-images/bin/700/3.bin : castle : 1.000
-images/bin/700/4.bin : castle : 0.968
-images/bin/700/5.bin : television, television system : 0.560
-images/bin/700/6.bin : castle : 0.481
-images/bin/700/7.bin : castle : 0.971
-images/bin/700/8.bin : castle : 0.968
-images/bin/700/9.bin : castle : 0.996
-images/bin/600/0.bin : trilobite : 0.979
-images/bin/600/1.bin : trilobite : 0.999
-Elapsed time: 67.658 sec
+Elapsed time: 33.965 sec
