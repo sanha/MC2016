@@ -39,80 +39,52 @@ const char* pooling_kernel_src =
                 "}";
 
 const char* mat_conversion_kernel_src =
-				"__kernel void mat_conversion(__global const float* inputs, " \
-				"__global float* mats) {" \
-				"	int g_1 = get_global_id(0);" \
-				"	int g_2 = get_global_id(1);" \
-				"	int g_3 = get_global_id(2);" \
-				"	int N = get_global_size(1);" \
-				"	int nn = N * N;" \
-				" 	int i, j;" \
-				"	__global const float *input = inputs + g_1 * nn;" \
-				"	__global float *mat = mats + g_1 * 9 * nn;" \
-				"	int idx;" \
-				"   for (i = 0; i < 3; i++) {" \
-				"       int x = g_2 + i - 1;" \
-				"   	for (j = 0; j < 3; j++) {" \
-				"       	int y = g_3 + j - 1;" \
-				"			idx = 3 * i + j;" \
-				"       	float val = 0.0;" \
-				"       	if (x >= 0 && x < N && y >= 0 && y < N) {" \
-				"       		val = input[x * N + y];" \
-				"   		}" \
-				"			mat[idx * nn + g_2 * N + g_3] = val;" \
-				"		}" \
-				"	}" \
-				"}";
+								"__kernel void mat_conversion(__global const float* inputs, " \
+								"__global float* mats) {" \
+								"	int g_1 = get_global_id(0);" \
+								"	int g_2 = get_global_id(1);" \
+								"	int g_3 = get_global_id(2);" \
+								"	int N = get_global_size(1);" \
+								"	int nn = N * N;" \
+								" 	int i, j;" \
+								"	__global const float *input = inputs + g_1 * nn;" \
+								"	__global float *mat = mats + g_1 * 9 * nn;" \
+								"	int idx;" \
+								"   for (i = 0; i < 3; i++) {" \
+								"       int x = g_2 + i - 1;" \
+								"   	for (j = 0; j < 3; j++) {" \
+								"       	int y = g_3 + j - 1;" \
+								"			idx = 3 * i + j;" \
+								"       	float val = 0.0;" \
+								"       	if (x >= 0 && x < N && y >= 0 && y < N) {" \
+								"       		val = input[x * N + y];" \
+								"   		}" \
+								"			mat[idx * nn + g_2 * N + g_3] = val;" \
+								"		}" \
+								"	}" \
+								"}";
 
 const char* conv_kernel_src =
                 "__kernel void convolution(__global const float *mats, " \
                 "__global float *outputs, " \
                 "__global const float *filters, " \
-				"__constant float *biases, " \
-				/*"__local float *mat_l, " \
-				"__local float *filter_l, " \*/
+								"__global const float *biases, " \
                 "int D1)" \
                 "{" \
                 "   int g_1 = get_global_id(0);" \
                 "   int D2 = get_global_size(0);" \
-				"	int g_2 = get_global_id(1);" \
-				"	int g_3 = get_global_id(2);" \
-				"	int N = get_global_size(1);" \
-				"	int nn = N * N;" \
-/*				"	int l_1 = get_local_id(0);" \
-				"	int l_2 = get_local_id(1);" \
-				"	int l_3 = get_local_id(2);" \
-				"	int n_l = get_local_size(1);" \
-				"	int nn_l = n_l * n_l;" \
-				"	int idx1 = l_1 * nn_l + l_2 * n_l + l_3;" \*/
-				"	__global const float *filter = filters + g_1 * 9 * D1;" \
-				"	float sum = 0.0;" \
-				"	int i;" \
-				/*"	int i, j, idx2, idx3;" \*/
-/*				"	for (i = 0; i < 9 * D1 + nn_l - 1; i += nn_l) {" \
-				"		idx2 = i + l_2 * n_l + l_3;" \
-				"		if (idx2 < 9 * D1) {" \
-				"			filter_l[idx1] = filter[idx2];" \
-				"		} else { " \
-				" 			filter_l[idx1] = 0;" \
-				"		}" \
-				"		idx3 = i + l_1;" \
-				"		if (idx3 < 9 * D1) {" \
-				"			mat_l[idx1] = mats[idx3 * nn + l_2 * n_l + l_3];" \
-				"		} else {" \
-				"			mat_l[idx1] = 0;" \
-				"		};" \
-				"		barrier(CLK_LOCAL_MEM_FENCE);" \
-				"		for (j = 0; j < nn_l; j++) {" \
-				"			sum += filter_l[l_1 * nn_l + j] * mat_l[j * nn_l + l_3]; " \
-				"		}" \
-				"		barrier(CLK_LOCAL_MEM_FENCE);" \
-				"	}" \*/
-				"	for (i = 0; i < 9 * D1; i++) {" \
-				"		sum += filter[i] * mats[i * nn * g_2 * N + g_3];" \
-				"	}" \
-				"	sum += biases[g_1];" \
-				"	outputs[g_1 * nn + g_2 * N + g_3] = sum > 0 ? sum : 0;" \
+								"	int g_2 = get_global_id(1);" \
+								"	int g_3 = get_global_id(2);" \
+								"	int N = get_global_size(1);" \
+								"	int nn = N * N;" \
+								"	__global const float *filter = filters + g_1 * 9 * D1;" \
+								"	float sum = 0.0;" \
+								"	int i;" \
+								"	for (i = 0; i < 9 * D1; i++) {" \
+								"		sum += filter[i] * mats[i * nn + g_2 * N + g_3]; " \
+								"	}" \
+								"	sum += biases[g_1];" \
+								"	outputs[g_1 * nn + g_2 * N + g_3] = sum > 0 ? sum : 0;" \
                 "}";
 
 const char* fc_kernel_src =
@@ -322,7 +294,7 @@ static void convolution_layer(float * inputs, float * outputs, float * filters, 
   int i;
   for (i = 0; i < ndev; i++) {
     inputs_buf[i] = clCreateBuffer(*context, CL_MEM_READ_ONLY, inputs_size, NULL, NULL);
-  	mats_buf[i] = clCreateBuffer(*context, CL_MEM_READ_WRITE, mats_size, NULL, NULL);
+		mats_buf[i] = clCreateBuffer(*context, CL_MEM_READ_WRITE, mats_size, NULL, NULL);
     outputs_buf[i] = clCreateBuffer(*context, CL_MEM_WRITE_ONLY, outputs_size, NULL, NULL);
     filters_buf[i] = clCreateBuffer(*context, CL_MEM_READ_ONLY, filters_size, NULL, NULL);
     biases_buf[i] = clCreateBuffer(*context, CL_MEM_READ_ONLY, biases_size, NULL, NULL);
@@ -346,17 +318,15 @@ static void convolution_layer(float * inputs, float * outputs, float * filters, 
   global[1] = N;
   global[2] = N;
 
-  int local_n;
-  if (N % 4) { // non-dividable, small N
-    local_n = 2;
-  } else {
-	local_n = 4;
-  }
-  //local[0] = local_n * local_n;
+  int local_size;
   local[0] = 4;
-  local[1] = local_n;
-  local[2] = local_n;
-//  int local_size = local[0] * local_n * local_n;
+  if (N % 4) { // non-dividable, small N
+    local_size = 2;
+  } else {
+		local_size = 4;
+  }
+  local[1] = local_size;
+  local[2] = local_size;
 
   for (i = 0; i < ndev; i++) {
     kernel[i] = clCreateKernel(*conv_program, "convolution", &error);
@@ -366,8 +336,6 @@ static void convolution_layer(float * inputs, float * outputs, float * filters, 
     clSetKernelArg(kernel[i], 1, sizeof(cl_mem), (void *)&outputs_buf[i]);
     clSetKernelArg(kernel[i], 2, sizeof(cl_mem), (void *)&filters_buf[i]);
     clSetKernelArg(kernel[i], 3, sizeof(cl_mem), (void *)&biases_buf[i]);
-//    clSetKernelArg(kernel[i], 4, sizeof(float) * local_size, NULL);
-//    clSetKernelArg(kernel[i], 5, sizeof(float) * local_size, NULL);
     clSetKernelArg(kernel[i], 4, sizeof(int), (void *)&d1);
 
     error = clEnqueueWriteBuffer(command_queue[i], filters_buf[i], CL_FALSE, 0, filters_size, (void *) ((size_t) filters), 0, NULL, NULL);
@@ -615,41 +583,41 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     convolution_layer(image, c1_1, f1_1, b1_1, 224, 3, 64, device_num);
 //test
 /*
-	if (i == 0) {
-  	  float *c1_1_t = (float *)malloc(sizeof(float) * 224 * 224 * 64);
+		if (i == 0) {
+		  float *c1_1_t = (float *)malloc(sizeof(float) * 224 * 224 * 64);
       convolution_layer_d(image, c1_1_t, f1_1, b1_1, 224, 3, 64);
-  	  int dif = 0;
-	  int it;
-	  for (it = 0; it < 224; it++) {
-	    if (c1_1[it] != c1_1_t[it]) {
-		  dif = 1;
-		  printf("%d'th element of conv is diffent. %f, correct %f\n", it, c1_1[it], c1_1_t[it]);
-	    }
-  	  }
-	  if (dif == 0) {
-	    printf("no difference!\n");
-	  }
-	}
+		  int dif = 0;
+		  int it;
+		  for (it = 0; it < 224; it++) {
+		    if (c1_1[it] != c1_1_t[it]) {
+				  dif = 1;
+				  printf("%d'th element of conv is diffent. %f, correct %f\n", it, c1_1[it], c1_1_t[it]);
+		    }
+		  }
+		  if (dif == 0) {
+		    printf("no difference!\n");
+		  }
+		}
 */
     convolution_layer(c1_1, c1_2, f1_2, b1_2, 224, 64, 64, device_num);
     pooling_layer(c1_2, p1, 112, 64, device_num); 
 //test
 /*
-	if (i == 0) {
-	  float *p1_t = (float *)malloc(sizeof(float) * 112 * 112 * 64);
-	  pooling_layer_d(c1_2, p1_t, 112, 64);
-	  int dif = 0;
-	  int it;
-	  for (it = 0; it < 64; it++) {
-	    if (p1[it] != p1_t[it]) {
-		  dif = 1;
-		  printf("%d'th element of pooling is different. %f, correct %f\n", it, p1[it], p1_t[it]);
+		if (i == 0) {
+		  float *p1_t = (float *)malloc(sizeof(float) * 112 * 112 * 64);
+		  pooling_layer_d(c1_2, p1_t, 112, 64);
+		  int dif = 0;
+		  int it;
+		  for (it = 0; it < 64; it++) {
+		    if (p1[it] != p1_t[it]) {
+				  dif = 1;
+				  printf("%d'th element of pooling is different. %f, correct %f\n", it, p1[it], p1_t[it]);
+				}
+		  }
+		  if (dif == 0) {
+		    printf("no difference!\n");
+		  }
 		}
-	  }
-	  if (dif == 0) {
-	    printf("no difference!\n");
-	  }
-	}
 */
 
     convolution_layer(p1, c2_1, f2_1, b2_1, 112, 64, 128, device_num);
@@ -676,7 +644,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 //test
 /*
     if (i == 0) {
-	  float *fc1_t = (float *)malloc(sizeof(float) * 4096);
+		  float *fc1_t = (float *)malloc(sizeof(float) * 4096);
       fc_layer_d(p5, fc1_t, w1, b1, 7 * 7 * 512, 4096);
       int dif = 0;
       int it;
@@ -864,4 +832,3 @@ void conv_single_itr_test(float *input_tmp, float *output_tmp, float *filter_tmp
     printf("Convolution correct result for %d %d\n\n", N-1, N-1);
   }
 }
-
