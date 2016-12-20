@@ -126,4 +126,4 @@ images/bin/700/8.bin : castle : 0.968
 images/bin/700/9.bin : castle : 0.996
 images/bin/600/0.bin : trilobite : 0.979
 images/bin/600/1.bin : trilobite : 0.999
-Elapsed time: 11.217 sec
+Elapsed time: 47.728 sec

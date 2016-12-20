@@ -593,8 +593,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
   float *assigned_images = images + rank * assigned * 224 * 224 * 3;
 
 //  float *c1_1[ndev], *c1_2[4], *c2_1[4], *c2_2[4], *c3_1[4], *c3_2[4], *c3_3[4], *c4_1[4], *c4_2[4], *c4_3[4], *c5_1[4], *c5_2[4], *c5_3[4]; // Convolution layers
-//  float *p1[ndev], *p2[4], *p3[4], *p4[4], *p5[4]; // Pooling layers
-  float *p5[4];
+  float *p1[ndev], *p2[4], *p3[4], *p4[4], *p5[4]; // Pooling layers
   float *fc1[ndev], *fc2[4], *fc3[4]; // Fully connected layers
   float *f1_1, *f1_2, *f2_1, *f2_2, *f3_1, *f3_2, *f3_3, *f4_1, *f4_2, *f4_3, *f5_1, *f5_2, *f5_3, *w1, *w2, *w3; // Filters and weights
   float *b1_1, *b1_2, *b2_1, *b2_2, *b3_1, *b3_2, *b3_3, *b4_1, *b4_2, *b4_3, *b5_1, *b5_2, *b5_3, *b1, *b2, *b3; // Biases
@@ -627,10 +626,9 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     c5_2[i] = (float *)malloc(sizeof(float) * 14 * 14 * 512);
     c5_3[i] = (float *)malloc(sizeof(float) * 14 * 14 * 512);
 
+    p5[i] = (float *)malloc(sizeof(float) * 7 * 7 * 512);
 */
   for (i = 0; i < 4; i ++) {
-    p5[i] = (float *)malloc(sizeof(float) * 7 * 7 * 512);
-
     fc1[i] = (float *)malloc(sizeof(float) * 4096);
     fc2[i] = (float *)malloc(sizeof(float) * 4096);
     fc3[i] = (float *)malloc(sizeof(float) * 1000);
@@ -690,8 +688,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 	  }
 	}
 
-//    convolution_layer(image, c1_1, f1_1, b1_1, 224, 3, 64, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f1_1, b1_1, 224, 3, 64, device_num);
+    convolution_layer(image, c1_1, f1_1, b1_1, 224, 3, 64, device_num);
 //test
 /*
 	if (i == 0) {
@@ -710,10 +707,8 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 	  }
 	}
 */
-    convolution_layer_buf(inout2_buf, inout1_buf, f1_2, b1_2, 224, 64, 64, device_num);
-    pooling_layer_buf(inout1_buf, inout2_buf, 112, 64, device_num); 
-//    convolution_layer(c1_1, c1_2, f1_2, b1_2, 224, 64, 64, device_num);
-//    pooling_layer(c1_2, p1, 112, 64, device_num); 
+    convolution_layer(c1_1, c1_2, f1_2, b1_2, 224, 64, 64, device_num);
+    pooling_layer(c1_2, p1, 112, 64, device_num); 
 //test
 /*
 		if (i == 0) {
@@ -733,26 +728,6 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 		}
 */
 
-    convolution_layer_buf(inout2_buf, inout1_buf, f2_1, b2_1, 112, 64, 128, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f2_2, b2_2, 112, 128, 128, device_num);
-    pooling_layer_buf(inout2_buf, inout1_buf, 56, 128, device_num);
-
-    convolution_layer_buf(inout1_buf, inout2_buf, f3_1, b3_1, 56, 128, 256, device_num);
-    convolution_layer_buf(inout2_buf, inout1_buf, f3_2, b3_2, 56, 256, 256, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f3_3, b3_3, 56, 256, 256, device_num);
-    pooling_layer_buf(inout2_buf, inout1_buf, 28, 256, device_num);
-
-    convolution_layer_buf(inout1_buf, inout2_buf, f4_1, b4_1, 28, 256, 512, device_num);
-    convolution_layer_buf(inout2_buf, inout1_buf, f4_2, b4_2, 28, 512, 512, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f4_3, b4_3, 28, 512, 512, device_num);
-    pooling_layer_buf(inout2_buf, inout1_buf, 14, 512, device_num);
-
-    convolution_layer_buf(inout1_buf, inout2_buf, f5_1, b5_1, 14, 512, 512, device_num);
-    convolution_layer_buf(inout2_buf, inout1_buf, f5_2, b5_2, 14, 512, 512, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f5_3, b5_3, 14, 512, 512, device_num);
-    pooling_layer_buf(inout2_buf, inout1_buf, 7, 512, device_num);
-
-/*
     convolution_layer(p1, c2_1, f2_1, b2_1, 112, 64, 128, device_num);
     convolution_layer(c2_1, c2_2, f2_2, b2_2, 112, 128, 128, device_num); 
     pooling_layer(c2_2, p2, 56, 128, device_num);
@@ -771,11 +746,8 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     convolution_layer(c5_1, c5_2, f5_2, b5_2, 14, 512, 512, device_num);
     convolution_layer(c5_2, c5_3, f5_3, b5_3, 14, 512, 512, device_num);
     pooling_layer(c5_3, p5, 7, 512, device_num);
-*/
-	for (j = 0; j < device_num; j++) {
-	  error = clEnqueueReadBuffer(command_queue[j], inout1_buf[j], CL_TRUE, 0, 7 * 7 * 512 * sizeof(float), (void *) ((size_t) p5[j]), 0, NULL, NULL);
-      enqueue_buffer_error_check(error, "vggnet-convolution", "p5");
 
+	for (j = 0; j < device_num; j++) {
 	  fc_layer_d(p5[j], fc1[j], w1, b1, 7 * 7 * 512, 4096); 
 
 //test
@@ -797,8 +769,8 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     }
 */
 
-      fc_layer_d(fc1[j], fc2[j], w2, b2, 4096, 4096);
-      fc_layer_d(fc2[j], fc3[j], w3, b3, 4096, 1000);
+    fc_layer_d(fc1[j], fc2[j], w2, b2, 4096, 4096);
+    fc_layer_d(fc2[j], fc3[j], w3, b3, 4096, 1000);
 
 	  softmax(fc3[j]);
     }
@@ -834,8 +806,8 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
  
     free(c5_1[i]);
     free(c5_2[i]);
-    free(c5_3[i]);*/
-    free(p5[i]);
+    free(c5_3[i]);
+    free(p5[i]);*/
 
     free(fc1[i]);
     free(fc2[i]);

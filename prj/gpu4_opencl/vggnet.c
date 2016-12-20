@@ -382,8 +382,7 @@ static void convolution_layer_d(float * inputs, float * outputs, float * filters
   }
 }
 
-// this kernel-version layer doesn't show any performance increasing. ignore this.
-static void fc_layer(float * input_neuron, float * output_neuron, float * weights, float * biases, int N, int M, int ndev) 
+static void fc_layer(float **input_neurons, float **output_neurons, float *weights, float *biases, int N, int M, int ndev) 
 {
   cl_int error;
   int input_n_size = N * sizeof(float);
@@ -416,7 +415,7 @@ static void fc_layer(float * input_neuron, float * output_neuron, float * weight
     clSetKernelArg(kernel[i], 3, sizeof(cl_mem), (void *)&biases_buf[i]);
     clSetKernelArg(kernel[i], 4, sizeof(int), (void *)&n);
 
-    error = clEnqueueWriteBuffer(command_queue[i], input_n_buf[i], CL_FALSE, 0, input_n_size, (void *) ((size_t) input_neuron), 0, NULL, NULL);
+    error = clEnqueueWriteBuffer(command_queue[i], input_n_buf[i], CL_FALSE, 0, input_n_size, (void *) ((size_t) input_neurons[i]), 0, NULL, NULL);
     enqueue_buffer_error_check(error, "fc", "input_neuron");
     error = clEnqueueWriteBuffer(command_queue[i], weights_buf[i], CL_FALSE, 0, weights_size, (void *) ((size_t) weights), 0, NULL, NULL);
     enqueue_buffer_error_check(error, "fc", "weights");
@@ -425,8 +424,10 @@ static void fc_layer(float * input_neuron, float * output_neuron, float * weight
 
     error = clEnqueueNDRangeKernel(command_queue[i], kernel[i], 1, NULL, global, local, 0, NULL, NULL);
     enqueue_kernel_error_check(error, "fc");
+  }
 
-    error = clEnqueueReadBuffer(command_queue[i], output_n_buf[i], CL_TRUE, 0, output_n_size, (void *) ((size_t) output_neuron), 0, NULL, NULL);
+  for (i = 0; i < ndev; i++) {
+    error = clEnqueueReadBuffer(command_queue[i], output_n_buf[i], CL_TRUE, 0, output_n_size, (void *) ((size_t) output_neurons[i]), 0, NULL, NULL);
     enqueue_buffer_error_check(error, "fc", "output_neuron");
   }
 }
@@ -644,9 +645,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     convolution_layer(c5_2, c5_3, f5_3, b5_3, 14, 512, 512, device_num);
     pooling_layer(c5_3, p5, 7, 512, device_num);
 
-	for (j = 0; j < device_num; j++) {
-	  fc_layer_d(p5[j], fc1[j], w1, b1, 7 * 7 * 512, 4096); 
-
+    fc_layer(p5, fc1, w1, b1, 7 * 7 * 512, 4096, device_num); 
 //test
 /*
     if (i == 0) {
@@ -666,9 +665,10 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     }
 */
 
-      fc_layer_d(fc1[j], fc2[j], w2, b2, 4096, 4096);
-      fc_layer_d(fc2[j], fc3[j], w3, b3, 4096, 1000);
+    fc_layer(fc1, fc2, w2, b2, 4096, 4096, device_num);
+    fc_layer(fc2, fc3, w3, b3, 4096, 1000, device_num);
 
+    for (j = 0; j < device_num; j++) {
 	  softmax(fc3[j]);
     }
 

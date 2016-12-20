@@ -27,10 +27,10 @@ int main(int argc, char** argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   
-  //if (size != 4) {
-  if (size != 1) {
-//	printf("mpi size %d instead of 4!\n", size);
-	printf("mpi size %d instead of 1!\n", size);
+  if (size != 4) {
+  //if (size != 1) {
+	printf("mpi size %d instead of 4!\n", size);
+//	printf("mpi size %d instead of 1!\n", size);
 	exit(1);
   }
 
