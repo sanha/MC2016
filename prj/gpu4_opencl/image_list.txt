@@ -1,4 +1,4 @@
-31
+1024
 images/bin/0/0.bin
 images/bin/0/1.bin
 images/bin/0/2.bin

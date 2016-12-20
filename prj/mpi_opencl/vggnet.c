@@ -110,7 +110,7 @@ cl_device_id *device;
 cl_context *context;
 cl_command_queue *command_queue;
 cl_program *pooling_program, *mat_conversion_program, *conv_program, *fc_program;
-cl_mem *inout1_buf, *inout2_buf;
+cl_mem *inout1_buf, *inout2_buf, *mats_buf;
 cl_mem *f1_1_buf, *f1_2_buf, *f2_1_buf, *f2_2_buf, *f3_1_buf, *f3_2_buf, *f3_3_buf, *f4_1_buf, *f4_2_buf, *f4_3_buf, *f5_1_buf, *f5_2_buf, *f5_3_buf;
 cl_mem *b1_1_buf, *b1_2_buf, *b2_1_buf, *b2_2_buf, *b3_1_buf, *b3_2_buf, *b3_3_buf, *b4_1_buf, *b4_2_buf, *b4_3_buf, *b5_1_buf, *b5_2_buf, *b5_3_buf;
 float *f1_1, *f1_2, *f2_1, *f2_2, *f3_1, *f3_2, *f3_3, *f4_1, *f4_2, *f4_3, *f5_1, *f5_2, *f5_3;
@@ -136,6 +136,7 @@ int cl_setting(float *network) {
   fc_program = (cl_program *)malloc(sizeof(cl_program));
   inout1_buf = (cl_mem *)malloc(sizeof(cl_mem) * 4);
   inout2_buf = (cl_mem *)malloc(sizeof(cl_mem) * 4);
+  mats_buf = (cl_mem *)malloc(sizeof(cl_mem) * 4);
   f1_1_buf = (cl_mem *)malloc(sizeof(cl_mem) * 4);
   f1_2_buf = (cl_mem *)malloc(sizeof(cl_mem) * 4);
   f2_1_buf = (cl_mem *)malloc(sizeof(cl_mem) * 4);
@@ -253,6 +254,7 @@ int cl_setting(float *network) {
   for (i = 0; i < ndev; i++) {
     inout1_buf[i] = clCreateBuffer(*context, CL_MEM_READ_WRITE, 224 * 224 * 64 * sizeof(float), NULL, NULL);
     inout2_buf[i] = clCreateBuffer(*context, CL_MEM_READ_WRITE, 224 * 224 * 64 * sizeof(float), NULL, NULL);
+    mats_buf[i] = clCreateBuffer(*context, CL_MEM_READ_WRITE, 224 * 224 * 64 * 9 * sizeof(float), NULL, NULL);
 
     f1_1_buf[i] = clCreateBuffer(*context, CL_MEM_READ_ONLY, 3 * 3 * 3 * 64 * sizeof(float), NULL, NULL);
     b1_1_buf[i] = clCreateBuffer(*context, CL_MEM_READ_ONLY, 64 * sizeof(float), NULL, NULL);
@@ -424,21 +426,17 @@ static void convolution3x3(float * input, float * output, float * filter, int N)
 }
 
 #define ReLU(x) (((x)>0)?(x):0)
-static void convolution_layer_buf(cl_mem *inputs_bufs, cl_mem *outputs_bufs, cl_mem *filters_bufs, cl_mem *biases_bufs, int N, int D1, int D2, int ndev)
+static void convolution_layer_buf(cl_mem *inputs_bufs, cl_mem *outputs_bufs, cl_mem *mats_buf, cl_mem *filters_bufs, cl_mem *biases_bufs, int N, int D1, int D2, int ndev)
 {
   cl_int error;
-  int inputs_size = D1 * N * N * sizeof(float);
-  int mats_size = 9 * inputs_size;
   int d1 = D1;
   size_t global[3] = { D1, N, N };
   size_t local[3] = { 1, 1, N };
 
-  cl_mem mats_buf[ndev];
   cl_kernel kernel[ndev];
 
   int i;
   for (i = 0; i < ndev; i++) {
-    mats_buf[i] = clCreateBuffer(*context, CL_MEM_READ_WRITE, mats_size, NULL, NULL);
 
     kernel[i] = clCreateKernel(*mat_conversion_program, "mat_conversion", &error);
     create_kernel_error_check(error, "mat_conversion");
@@ -456,10 +454,12 @@ static void convolution_layer_buf(cl_mem *inputs_bufs, cl_mem *outputs_bufs, cl_
 
   int local_size;
   local[0] = 4;
-  if (N % 4) { // non-dividable, small N
-    local_size = 2;
+  if (!(N % 8)) {
+  	local_size = 8;
+  } else if (!(N % 4)) {
+  	local_size = 4;
   } else {
-    local_size = 4;
+  	local_size = 2;
   }
   local[1] = local_size;
   local[2] = local_size;
@@ -646,7 +646,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 	  }
 	}
 
-    convolution_layer_buf(inout1_buf, inout2_buf, f1_1_buf, b1_1_buf, 224, 3, 64, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f1_1_buf, b1_1_buf, 224, 3, 64, device_num);
 //test
 /*
 	if (i == 0) {
@@ -665,7 +665,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 	  }
 	}
 */
-    convolution_layer_buf(inout2_buf, inout1_buf, f1_2_buf, b1_2_buf, 224, 64, 64, device_num);
+    convolution_layer_buf(inout2_buf, inout1_buf, mats_buf, f1_2_buf, b1_2_buf, 224, 64, 64, device_num);
     pooling_layer_buf(inout1_buf, inout2_buf, 112, 64, device_num); 
 //test
 /*
@@ -686,23 +686,23 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
 		}
 */
 
-    convolution_layer_buf(inout2_buf, inout1_buf, f2_1_buf, b2_1_buf, 112, 64, 128, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f2_2_buf, b2_2_buf, 112, 128, 128, device_num);
+    convolution_layer_buf(inout2_buf, inout1_buf, mats_buf, f2_1_buf, b2_1_buf, 112, 64, 128, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f2_2_buf, b2_2_buf, 112, 128, 128, device_num);
     pooling_layer_buf(inout2_buf, inout1_buf, 56, 128, device_num);
 
-    convolution_layer_buf(inout1_buf, inout2_buf, f3_1_buf, b3_1_buf, 56, 128, 256, device_num);
-    convolution_layer_buf(inout2_buf, inout1_buf, f3_2_buf, b3_2_buf, 56, 256, 256, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f3_3_buf, b3_3_buf, 56, 256, 256, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f3_1_buf, b3_1_buf, 56, 128, 256, device_num);
+    convolution_layer_buf(inout2_buf, inout1_buf, mats_buf, f3_2_buf, b3_2_buf, 56, 256, 256, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f3_3_buf, b3_3_buf, 56, 256, 256, device_num);
     pooling_layer_buf(inout2_buf, inout1_buf, 28, 256, device_num);
 
-    convolution_layer_buf(inout1_buf, inout2_buf, f4_1_buf, b4_1_buf, 28, 256, 512, device_num);
-    convolution_layer_buf(inout2_buf, inout1_buf, f4_2_buf, b4_2_buf, 28, 512, 512, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f4_3_buf, b4_3_buf, 28, 512, 512, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f4_1_buf, b4_1_buf, 28, 256, 512, device_num);
+    convolution_layer_buf(inout2_buf, inout1_buf, mats_buf, f4_2_buf, b4_2_buf, 28, 512, 512, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f4_3_buf, b4_3_buf, 28, 512, 512, device_num);
     pooling_layer_buf(inout2_buf, inout1_buf, 14, 512, device_num);
 
-    convolution_layer_buf(inout1_buf, inout2_buf, f5_1_buf, b5_1_buf, 14, 512, 512, device_num);
-    convolution_layer_buf(inout2_buf, inout1_buf, f5_2_buf, b5_2_buf, 14, 512, 512, device_num);
-    convolution_layer_buf(inout1_buf, inout2_buf, f5_3_buf, b5_3_buf, 14, 512, 512, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f5_1_buf, b5_1_buf, 14, 512, 512, device_num);
+    convolution_layer_buf(inout2_buf, inout1_buf, mats_buf, f5_2_buf, b5_2_buf, 14, 512, 512, device_num);
+    convolution_layer_buf(inout1_buf, inout2_buf, mats_buf, f5_3_buf, b5_3_buf, 14, 512, 512, device_num);
     pooling_layer_buf(inout2_buf, inout1_buf, 7, 512, device_num);
 
 	for (j = 0; j < device_num; j++) {
