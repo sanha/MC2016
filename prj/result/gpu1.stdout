@@ -1,0 +1,9 @@
+images/bin/0/0.bin : kit fox, Vulpes macrotis : 0.733
+images/bin/0/1.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.551
+images/bin/0/2.bin : fox squirrel, eastern fox squirrel, Sciurus niger : 0.476
+images/bin/0/3.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.634
+images/bin/0/4.bin : red wolf, maned wolf, Canis rufus, Canis niger : 0.412
+images/bin/0/5.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.199
+images/bin/0/6.bin : grey fox, gray fox, Urocyon cinereoargenteus : 0.478
+images/bin/0/7.bin : kit fox, Vulpes macrotis : 0.217
+Elapsed time: 4.983 sec

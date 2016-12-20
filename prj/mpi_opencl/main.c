@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   if (size != 4) {
   //if (size != 1) {
 	printf("mpi size %d instead of 4!\n", size);
-//	printf("mpi size %d instead of 1!\n", size);
+	//printf("mpi size %d instead of 1!\n", size);
 	exit(1);
   }
 
@@ -113,6 +113,7 @@ int main(int argc, char** argv) {
     }
     printf("Elapsed time: %ld.%03ld sec\n", spent.tv_sec, spent.tv_nsec/1000/1000);
   }
+  MPI_Finalize();
   return 0;
 }
 
