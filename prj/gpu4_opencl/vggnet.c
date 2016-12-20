@@ -113,9 +113,9 @@ cl_program *pooling_program, *mat_conversion_program, *conv_program, *fc_program
 
 int cl_setting(float *network) {
   platform = (cl_platform_id *)malloc(sizeof(platform));
-  device = (cl_device_id *)malloc(sizeof(cl_device_id) * 1);
+  device = (cl_device_id *)malloc(sizeof(cl_device_id) * 4);
   context = (cl_context *)malloc(sizeof(cl_device_id));
-  command_queue = (cl_command_queue *)malloc(sizeof(cl_command_queue) * 1);
+  command_queue = (cl_command_queue *)malloc(sizeof(cl_command_queue) * 4);
   pooling_program = (cl_program *)malloc(sizeof(cl_program));
   mat_conversion_program = (cl_program *)malloc(sizeof(cl_program));
   conv_program = (cl_program *)malloc(sizeof(cl_program));

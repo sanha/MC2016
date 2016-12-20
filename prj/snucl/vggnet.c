@@ -113,9 +113,9 @@ cl_program *pooling_program, *mat_conversion_program, *conv_program, *fc_program
 
 int cl_setting(float *network) {
   platform = (cl_platform_id *)malloc(sizeof(platform));
-  device = (cl_device_id *)malloc(sizeof(cl_device_id) * 4);
+  device = (cl_device_id *)malloc(sizeof(cl_device_id) * 16);
   context = (cl_context *)malloc(sizeof(cl_device_id));
-  command_queue = (cl_command_queue *)malloc(sizeof(cl_command_queue) * 4);
+  command_queue = (cl_command_queue *)malloc(sizeof(cl_command_queue) * 16);
   pooling_program = (cl_program *)malloc(sizeof(cl_program));
   mat_conversion_program = (cl_program *)malloc(sizeof(cl_program));
   conv_program = (cl_program *)malloc(sizeof(cl_program));
@@ -128,20 +128,19 @@ int cl_setting(float *network) {
     printf("Get platform id fail\n");
     exit(1);
   }
-/*
+
   error = clGetDeviceIDs(*platform, CL_DEVICE_TYPE_GPU, 0, NULL, (unsigned int *) &ndev);
   if (error != CL_SUCCESS) {
-    printf("Get gpu number fail\n");
+    printf("Get cpu number fail\n");
     exit(1);
-  } else if (ndev != 4) {
-    printf("gpu device number is %d instead of 4\n", ndev);
+  } else if (ndev != 16) {
+    printf("gpu device number is %d instead of 16\n", ndev);
     exit(1);
   }
-*/
-  ndev = 4;
+
   error = clGetDeviceIDs(*platform, CL_DEVICE_TYPE_GPU, ndev, device, NULL);
   if (error != CL_SUCCESS) {
-    printf("Get gpu id fail\n");
+    printf("Get cpu id fail\n");
     exit (1);
   }
 
@@ -490,26 +489,18 @@ static float * get_param(float ** array, int size)
   return subarray;
 }
 
-void vggnet(float * images, float * network, int * labels, float * confidences, int num_images, int rank, int assigned)
+void vggnet(float * images, float * network, int * labels, float * confidences, int num_images)
 {
   int ndev = cl_setting(network);
-  int nimg;
-  if ((rank + 1) * assigned > num_images) {
-    nimg = (rank + 1) * assigned - num_images;
-  } else {
-    nimg = assigned;
-  }
 
-  float *assigned_images = images + rank * assigned * 224 * 224 * 3;
-
-  float *c1_1[ndev], *c1_2[4], *c2_1[4], *c2_2[4], *c3_1[4], *c3_2[4], *c3_3[4], *c4_1[4], *c4_2[4], *c4_3[4], *c5_1[4], *c5_2[4], *c5_3[4]; // Convolution layers
-  float *p1[ndev], *p2[4], *p3[4], *p4[4], *p5[4]; // Pooling layers
-  float *fc1[ndev], *fc2[4], *fc3[4]; // Fully connected layers
+  float *c1_1[ndev], *c1_2[16], *c2_1[16], *c2_2[16], *c3_1[16], *c3_2[16], *c3_3[16], *c4_1[16], *c4_2[16], *c4_3[16], *c5_1[16], *c5_2[16], *c5_3[16]; // Convolution layers
+  float *p1[ndev], *p2[16], *p3[16], *p4[16], *p5[16]; // Pooling layers
+  float *fc1[ndev], *fc2[16], *fc3[16]; // Fully connected layers
   float *f1_1, *f1_2, *f2_1, *f2_2, *f3_1, *f3_2, *f3_3, *f4_1, *f4_2, *f4_3, *f5_1, *f5_2, *f5_3, *w1, *w2, *w3; // Filters and weights
   float *b1_1, *b1_2, *b2_1, *b2_2, *b3_1, *b3_2, *b3_3, *b4_1, *b4_2, *b4_3, *b5_1, *b5_2, *b5_3, *b1, *b2, *b3; // Biases
   int i, j;
 
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 16; i++) {
     c1_1[i] = (float *)malloc(sizeof(float) * 224 * 224 * 64);
     c1_2[i] = (float *)malloc(sizeof(float) * 224 * 224 * 64);
 
@@ -581,13 +572,13 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
   w3 = get_param(&network, 4096 * 1000);
   b3 = get_param(&network, 1000);
 
-  for(i = 0; i < nimg; i += ndev)
+  for(i = 0; i < num_images; i += ndev)
   {
-    int device_num = 4;
-	float *image[4];
+    int device_num = 16;
+	float *image[16];
 	for (j = 0; j < ndev; j++) {
-	  if (i + j < nimg) {
-	    image[j] = assigned_images + (i + j) * 224 * 224 * 3;
+	  if (i + j < num_images) {
+	    image[j] = images + (i + j) * 224 * 224 * 3;
 	  } else {
 	    device_num = j;
 		break;
@@ -597,21 +588,21 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     convolution_layer(image, c1_1, f1_1, b1_1, 224, 3, 64, device_num);
 //test
 /*
-	if (i == 0) {
-	  float *c1_1_t = (float *)malloc(sizeof(float) * 224 * 224 * 64);
-      convolution_layer_d(image[0], c1_1_t, f1_1, b1_1, 224, 3, 64);
-	  int dif = 0;
-	  int it;
-	  for (it = 0; it < 224; it++) {
-	    if (c1_1[0][it] != c1_1_t[it]) {
-			  dif = 1;
-			  printf("%d'th element of conv is diffent. %f, correct %f\n", it, c1_1[0][it], c1_1_t[it]);
-	    }
-	  }
-	  if (dif == 0) {
-	    printf("no difference!\n");
-	  }
-	}
+		if (i == 0) {
+		  float *c1_1_t = (float *)malloc(sizeof(float) * 224 * 224 * 64);
+      convolution_layer_d(image, c1_1_t, f1_1, b1_1, 224, 3, 64);
+		  int dif = 0;
+		  int it;
+		  for (it = 0; it < 224; it++) {
+		    if (c1_1[it] != c1_1_t[it]) {
+				  dif = 1;
+				  printf("%d'th element of conv is diffent. %f, correct %f\n", it, c1_1[it], c1_1_t[it]);
+		    }
+		  }
+		  if (dif == 0) {
+		    printf("no difference!\n");
+		  }
+		}
 */
     convolution_layer(c1_1, c1_2, f1_2, b1_2, 224, 64, 64, device_num);
     pooling_layer(c1_2, p1, 112, 64, device_num); 
@@ -682,7 +673,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     }
 
     for (j = 0; j < ndev; j++) {
-      if (i + j < nimg) {
+      if (i + j < num_images) {
         labels[i + j] = find_max(fc3[j]);
         confidences[i + j] = fc3[j][labels[i + j]];
       } else {
@@ -691,7 +682,7 @@ void vggnet(float * images, float * network, int * labels, float * confidences, 
     }
   }
 
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 16; i++) {
     free(c1_1[i]);
     free(c1_2[i]);
     free(p1[i]);

@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h>
 
 #include "network.h"
 #include "class_name.h"
-#include "mpi.h"
 
-void vggnet(float * images, float * network, int * labels, float * confidences, int num_images, int rank, int assigned);
+void vggnet(float * images, float * network, int * labels, float * confidences, int num_images);
 
 int timespec_subtract(struct timespec*, struct timespec*, struct timespec*);
 
@@ -20,19 +18,6 @@ int main(int argc, char** argv) {
   int sizes[32];
   char image_files[1024][1000];
   struct timespec start, end, spent;
-
-  int rank, size;
-  int fakeArgc = 1;
-  MPI_Init(&fakeArgc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
-  //if (size != 4) {
-  if (size != 1) {
-//	printf("mpi size %d instead of 4!\n", size);
-	printf("mpi size %d instead of 1!\n", size);
-	exit(1);
-  }
 
   if (argc != 2) {
     fprintf(stderr, "Usage: %s <image list>\n", argv[0]);
@@ -62,16 +47,10 @@ int main(int argc, char** argv) {
     fclose(io_file);
   }
 
-  // the number of assiged images
-  int assigned = ceil((double) num_images / (double) size);
-  int *part_labels = (int *)malloc(sizeof(int) * assigned);
-  float *part_confidences = (float *)malloc(sizeof(float) * assigned);
-
   images = (float *)malloc(sizeof(float) * 224 * 224 * 3 * num_images);
   network = (float *)malloc(sizeof(float) * vggnet_size); 
-  // changed for allgather
-  labels = (int *)malloc(sizeof(int) * assigned * size);
-  confidences = (float *)malloc(sizeof(float) * assigned * size);
+  labels = (int *)malloc(sizeof(int) * num_images);
+  confidences = (float *)malloc(sizeof(float) * num_images);
 
   int vggnet_idx = 0;
   for(i = 0; i < 32; i++)
@@ -97,22 +76,17 @@ int main(int argc, char** argv) {
     fclose(io_file);
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
   clock_gettime(CLOCK_MONOTONIC, &start);
-  vggnet(images, network, part_labels, part_confidences, num_images, rank, assigned);
-  MPI_Allgather(part_labels, assigned, MPI_INT, labels, assigned, MPI_INT, MPI_COMM_WORLD);
-  MPI_Allgather(part_confidences, assigned, MPI_FLOAT, confidences, assigned, MPI_FLOAT, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
+  vggnet(images, network, labels, confidences, num_images);
   clock_gettime(CLOCK_MONOTONIC, &end);
   timespec_subtract(&spent, &end, &start);
 
-  if (rank == 0) { // all other process can print out these information.
-	for(i = 0; i < num_images; i++)
-    {
-      printf("%s :%s : %.3f\n", image_files[i], class_name[labels[i]], confidences[i]);
-    }
-    printf("Elapsed time: %ld.%03ld sec\n", spent.tv_sec, spent.tv_nsec/1000/1000);
+  for(i = 0; i < num_images; i++)
+  {
+    printf("%s :%s : %.3f\n", image_files[i], class_name[labels[i]], confidences[i]);
   }
+
+  printf("Elapsed time: %ld.%03ld sec\n", spent.tv_sec, spent.tv_nsec/1000/1000);
   return 0;
 }
 
